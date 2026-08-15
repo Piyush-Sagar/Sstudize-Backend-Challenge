@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sstudize-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-sstudize_auth}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-sstudize_auth}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - sstudize-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sstudize-api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-sstudize_auth}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-changeme-dev-secret-min-32-chars-do-not-use-in-prod}
+      ARGON2_MEMORY_COST: ${ARGON2_MEMORY_COST:-19456}
+      ARGON2_TIME_COST: ${ARGON2_TIME_COST:-2}
+      ARGON2_PARALLELISM: ${ARGON2_PARALLELISM:-1}
+      JWT_ACCESS_TOKEN_EXPIRY: ${JWT_ACCESS_TOKEN_EXPIRY:-10m}
+      JWT_REFRESH_TOKEN_EXPIRY: ${JWT_REFRESH_TOKEN_EXPIRY:-7d}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      RATE_LIMIT_AUTH_MAX_REQUESTS: ${RATE_LIMIT_AUTH_MAX_REQUESTS:-10}
+      OTP_CODE_LENGTH: ${OTP_CODE_LENGTH:-6}
+      OTP_EXPIRY_MINUTES: ${OTP_EXPIRY_MINUTES:-5}
+      OTP_MAX_ATTEMPTS: ${OTP_MAX_ATTEMPTS:-5}
+      RESET_TOKEN_EXPIRY_HOURS: ${RESET_TOKEN_EXPIRY_HOURS:-1}
+      RESET_TOKEN_BYTES: ${RESET_TOKEN_BYTES:-32}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      MOCK_SMS_ENABLED: ${MOCK_SMS_ENABLED:-true}
+      MOCK_EMAIL_ENABLED: ${MOCK_EMAIL_ENABLED:-true}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        npx prisma migrate deploy &&
+        echo 'Starting server...' &&
+        node dist/server.js
+      "
+    networks:
+      - sstudize-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  sstudize-network:
+    driver: bridge

@@ -227,7 +227,7 @@ openssl dgst -sha256 -verify proof_pub.pem -signature proof.txt <(printf "%s%s" 
 git rev-parse HEAD
 ```
 
-**Output placeholder:** `🔄 TO BE FILLED AT SUBMISSION TIME`
+**Output placeholder:** `6085ac76f76a27fb2626b5c29d11fddc4941199c`
 
 ---
 
@@ -240,7 +240,7 @@ git rev-parse HEAD
 cat challenge.txt; git rev-parse HEAD | tr -d '\n' | openssl dgst -sha256
 ```
 
-**Output placeholder:** `🔄 TO BE FILLED AT SUBMISSION TIME`
+**Output placeholder:** `0d25300684357e2688560bcf3c686a865e012532580ace1b0bf426aaf40610b3`
 
 ---
 

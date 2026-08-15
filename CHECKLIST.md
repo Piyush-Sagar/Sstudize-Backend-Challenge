@@ -135,4 +135,4 @@
 - [ ] `npm run test:run` passes
 - [ ] `docker compose down -v && docker compose up --build` works
 - [ ] Clean database: migrations + seed + test all endpoints
-- [ ] Evaluator credentials documented in SUBMISSION.md
+- [x] Evaluator credentials documented in SUBMISSION.md

@@ -13,6 +13,7 @@ export type OTPPurpose = 'enable_2fa' | 'login_2fa';
 export interface OTPResult {
   challengeId: string;
   otpCode: string; // Only returned in development for mock SMS
+  otpId: string; // OTP database ID for linking Twilio verification
 }
 
 interface TwoFAChallengePayload {
@@ -59,7 +60,28 @@ export const otpService = {
     // can never be satisfied by a newer OTP.
     const challengeId = create2FAChallengeToken(userId, purpose, otp.id);
 
-    return { challengeId, otpCode };
+    return { challengeId, otpCode, otpId: otp.id };
+  },
+
+  /**
+   * Update the OTP record with Twilio Verification SID
+   */
+  async updateTwilioVerificationSid(otpId: string, verificationSid: string): Promise<void> {
+    await prisma.otp.update({
+      where: { id: otpId },
+      data: { twilioVerificationSid: verificationSid },
+    });
+  },
+
+  /**
+   * Get the Twilio Verification SID for an OTP
+   */
+  async getTwilioVerificationSid(otpId: string): Promise<string | null> {
+    const otp = await prisma.otp.findUnique({
+      where: { id: otpId },
+      select: { twilioVerificationSid: true },
+    });
+    return otp?.twilioVerificationSid ?? null;
   },
 
   /**
@@ -70,7 +92,7 @@ export const otpService = {
    * the same OTP. Failed attempts are persisted (they are not rolled back)
    * so the attempt counter and lockout behave correctly.
    */
-  async verify(challengeId: string, providedCode: string): Promise<{ userId: string; purpose: OTPPurpose }> {
+  async verify(challengeId: string, providedCode: string): Promise<{ userId: string; purpose: OTPPurpose; otpId: string }> {
     const challenge = verify2FAChallengeToken(challengeId) as TwoFAChallengePayload | null;
 
     if (!challenge) {
@@ -132,7 +154,7 @@ export const otpService = {
       throw new OTPAlreadyUsedError('OTP has already been used');
     }
 
-    return { userId, purpose };
+    return { userId, purpose, otpId };
   },
 
   /**

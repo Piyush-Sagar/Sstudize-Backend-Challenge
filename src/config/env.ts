@@ -31,6 +31,20 @@ const envSchema = z.object({
 
   MOCK_SMS_ENABLED: z.coerce.boolean().default(true),
   MOCK_EMAIL_ENABLED: z.coerce.boolean().default(true),
+
+  // SMS Provider Configuration
+  SMS_PROVIDER: z.enum(['mock', 'twilio']).default('mock'),
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_VERIFY_SERVICE_SID: z.string().optional(),
+}).refine((data) => {
+  if (data.SMS_PROVIDER === 'twilio') {
+    return data.TWILIO_ACCOUNT_SID && data.TWILIO_AUTH_TOKEN && data.TWILIO_VERIFY_SERVICE_SID;
+  }
+  return true;
+}, {
+  message: 'Twilio credentials (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID) are required when SMS_PROVIDER=twilio',
+  path: ['SMS_PROVIDER'],
 });
 
 let env: z.infer<typeof envSchema>;
@@ -46,7 +60,7 @@ export function loadEnv(): z.infer<typeof envSchema> {
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
-    console.error('❌ Invalid environment variables:');
+    console.error('[CONFIG] Invalid environment variables:');
     console.error(result.error.flatten().fieldErrors);
     process.exit(1);
   }

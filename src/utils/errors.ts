@@ -127,6 +127,12 @@ export class TwoFARequiredError extends AppError {
   }
 }
 
+export class SMSDeliveryError extends AppError {
+  constructor(message: string = 'Unable to send verification code', details?: unknown) {
+    super(message, 503, 'SMS_DELIVERY_FAILED', details);
+  }
+}
+
 // Error code constants for consistent client handling
 export const ErrorCodes = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',

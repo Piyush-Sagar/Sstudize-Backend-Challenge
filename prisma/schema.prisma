@@ -41,14 +41,15 @@ model RefreshToken {
 }
 
 model Otp {
-  id        String   @id @default(uuid())
-  userId    String
-  codeHash  String
-  purpose   String   // "enable_2fa" | "login_2fa"
-  expiresAt DateTime
-  used      Boolean  @default(false)
-  attempts  Int      @default(0)
-  createdAt DateTime @default(now())
+  id                    String   @id @default(uuid())
+  userId                String
+  codeHash              String
+  purpose               String   // "enable_2fa" | "login_2fa"
+  expiresAt             DateTime
+  used                  Boolean  @default(false)
+  attempts              Int      @default(0)
+  createdAt             DateTime @default(now())
+  twilioVerificationSid String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

@@ -126,11 +126,17 @@ export const authService = {
     // 2FA check
     if (currentUser.is2faEnabled) {
       // Generate login OTP
-      const { challengeId, otpCode } = await otpService.create(currentUser.id, 'login_2fa');
+      const { challengeId, otpCode, otpId } = await otpService.create(currentUser.id, 'login_2fa');
 
       // Send OTP via SMS
       if (currentUser.phone) {
-        await smsService.sendOTP(currentUser.phone, otpCode, 'login_2fa');
+        const smsResult = await smsService.sendOTP(currentUser.phone, otpCode, 'login_2fa');
+        
+        // Store Twilio Verification SID if available
+        if (smsResult.providerMessageId && !smsResult.providerMessageId.startsWith('mock-')) {
+          await otpService.updateTwilioVerificationSid(otpId, smsResult.providerMessageId);
+        }
+        
         await auditService.log({
           userId: currentUser.id,
           event: 'OTP_SENT',
@@ -189,7 +195,7 @@ export const authService = {
     userAgent?: string
   ): Promise<{ accessToken: string; refreshToken: string } | { success: true }> {
     const result = await otpService.verify(challengeId, code);
-    const { userId, purpose } = result;
+    const { userId, purpose, otpId } = result;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -207,6 +213,12 @@ export const authService = {
       ip,
       userAgent,
     });
+
+    // Mark Twilio verification as approved (best-effort)
+    const twilioVerificationSid = await otpService.getTwilioVerificationSid(otpId);
+    if (twilioVerificationSid) {
+      await smsService.approveTwilioVerification(twilioVerificationSid);
+    }
 
     if (purpose === 'enable_2fa') {
       // Enable 2FA for the user
@@ -265,9 +277,14 @@ export const authService = {
       throw new ValidationError('Phone number required to enable 2FA');
     }
 
-    const { challengeId, otpCode } = await otpService.create(userId, 'enable_2fa');
+    const { challengeId, otpCode, otpId } = await otpService.create(userId, 'enable_2fa');
 
-    await smsService.sendOTP(user.phone, otpCode, 'enable_2fa');
+    const smsResult = await smsService.sendOTP(user.phone, otpCode, 'enable_2fa');
+
+    // Store Twilio Verification SID if available
+    if (smsResult.providerMessageId && !smsResult.providerMessageId.startsWith('mock-')) {
+      await otpService.updateTwilioVerificationSid(otpId, smsResult.providerMessageId);
+    }
 
     await auditService.log({
       userId,
@@ -357,8 +374,8 @@ export const authService = {
       console.log(`Recipient:  ${user.email}`);
       console.log(`Reset Token: ${resetToken}`);
       console.log('');
-      console.log('⚠️  THIS IS A MOCK EMAIL SERVICE FOR DEVELOPMENT ONLY');
-      console.log('⚠️  In production, this would send an actual email');
+      console.log('[MOCK EMAIL] THIS IS A MOCK EMAIL SERVICE FOR DEVELOPMENT ONLY');
+      console.log('[MOCK EMAIL] In production, this would send an actual email');
       console.log(separator + '\n');
 
       await auditService.log({

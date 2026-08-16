@@ -141,6 +141,62 @@ Watch the terminal where `npm run dev` is running.
 
 ---
 
+## How to Retrieve Mock OTP
+
+When running locally or in Docker with `SMS_PROVIDER=mock` (default), OTPs are logged to the **API server console** (stdout).
+
+### For SMS OTP (2FA Enable / Login with 2FA):
+```
+============================================================
+[MOCK SMS] DEVELOPMENT ONLY - OTP DELIVERY
+============================================================
+Timestamp:  2024-01-15T10:30:00.000Z
+Recipient:  +14155552671
+Purpose:    login_2fa
+OTP Code:   123456
+
+⚠️  THIS IS A MOCK SMS SERVICE FOR DEVELOPMENT ONLY
+...
+```
+
+**The OTP Code is on the line: `OTP Code:   123456`**
+
+### In Docker:
+```bash
+docker compose logs -f api
+# Watch for the mock SMS output when triggering 2FA flows
+```
+
+### In Local Development:
+Watch the terminal where `npm run dev` is running.
+
+---
+
+## Real SMS with Twilio Verify
+
+When `SMS_PROVIDER=twilio` is configured, OTPs are delivered as real SMS messages via **Twilio Verify** with custom verification codes.
+
+### Configuration
+
+```env
+SMS_PROVIDER=twilio
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=your-auth-token-here
+TWILIO_VERIFY_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### Trial Account Limitations
+
+- Trial accounts can only send SMS to **verified phone numbers**
+- Add verified numbers at: Twilio Console → Phone Numbers → Verified Caller IDs
+- Unverified numbers will fail with: `"Unverified trial number - verify in Twilio console"`
+
+### No OTP in Logs
+
+With Twilio mode, OTPs are **not logged to console**. The SMS is delivered directly to the user's phone.
+
+---
+
 ## How to Retrieve Password Reset Token
 
 When calling `POST /api/auth/forgot-password`, the reset token is logged to the **API server console**:

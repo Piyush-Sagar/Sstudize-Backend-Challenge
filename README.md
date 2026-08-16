@@ -612,6 +612,65 @@ The `smsService` is an interface - replace `MockSMSProvider` with `ProductionSMS
 
 ---
 
+## 📲 Real SMS with Twilio Verify
+
+The application supports **Twilio Verify** as a production SMS delivery provider. This uses Twilio's Verify API with **custom verification codes** so the application's own OTPs are delivered via SMS.
+
+### Setup
+
+1. **Create a Twilio Verify Service** in the [Twilio Console](https://console.twilio.com/us1/develop/verify/services)
+2. **Enable Custom Verification Codes** in the Verify Service settings
+3. **Verify destination phone numbers** in the Twilio Console (required for trial accounts)
+
+### Configuration
+
+Add to your `.env`:
+
+```env
+SMS_PROVIDER=twilio
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=your-auth-token-here
+TWILIO_VERIFY_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `SMS_PROVIDER` | Set to `twilio` to enable | Yes |
+| `TWILIO_ACCOUNT_SID` | Twilio Account SID | Yes |
+| `TWILIO_AUTH_TOKEN` | Twilio Auth Token (secret!) | Yes |
+| `TWILIO_VERIFY_SERVICE_SID` | Verify Service SID | Yes |
+
+### Trial Account Notes
+
+- Trial accounts can only send SMS to **verified phone numbers**
+- Verify numbers in: Twilio Console → Phone Numbers → Verified Caller IDs
+- The application will return a safe error: `"Unverified trial number - verify in Twilio console"` if the number isn't verified
+
+### Fallback to Mock
+
+To disable Twilio and use mock SMS (for development/testing):
+
+```env
+SMS_PROVIDER=mock
+```
+
+This is the default and requires no Twilio credentials.
+
+### Docker
+
+The Docker Compose configuration passes through all Twilio environment variables:
+
+```yaml
+SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+TWILIO_VERIFY_SERVICE_SID: ${TWILIO_VERIFY_SERVICE_SID:-}
+```
+
+Default Docker operation uses `SMS_PROVIDER=mock`.
+
+---
+
 ## 📧 Mock Email / Reset Token Instructions
 
 Password reset tokens are logged similarly:

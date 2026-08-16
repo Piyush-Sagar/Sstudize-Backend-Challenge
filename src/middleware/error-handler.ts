@@ -31,7 +31,7 @@ export function errorHandler(
 ): void {
   // Log error for debugging (but not sensitive data)
   if (config.NODE_ENV !== 'test') {
-    console.error('❌ Error:', {
+    console.error('[ERROR]', {
       name: err.name,
       message: err.message,
       stack: err.stack,

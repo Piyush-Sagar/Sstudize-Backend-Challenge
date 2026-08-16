@@ -17,14 +17,14 @@ if (process.env.NODE_ENV !== 'production') {
 export async function connectDatabase(): Promise<void> {
   try {
     await prisma.$connect();
-    console.log('✅ Database connected');
+    console.log('[DB] Database connected');
   } catch (error) {
-    console.error('❌ Database connection failed:', error);
+    console.error('[DB] Database connection failed:', error);
     throw error;
   }
 }
 
 export async function disconnectDatabase(): Promise<void> {
   await prisma.$disconnect();
-  console.log('✅ Database disconnected');
+  console.log('[DB] Database disconnected');
 }

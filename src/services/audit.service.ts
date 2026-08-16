@@ -52,7 +52,7 @@ export const auditService = {
       });
     } catch (error) {
       // Audit logging should never break the main flow
-      console.error('❌ Audit log failed:', error);
+      console.error('[AUDIT] Audit log failed:', error);
     }
   },
 

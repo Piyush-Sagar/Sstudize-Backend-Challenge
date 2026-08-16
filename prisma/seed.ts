@@ -5,7 +5,7 @@ import { hashPassword } from '../src/utils/crypto';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  console.log('[SEED] Seeding database...');
 
   // Evaluator credentials (documented in SUBMISSION.md)
   const evaluatorEmail = 'evaluator@example.com';
@@ -18,7 +18,7 @@ async function main() {
   });
 
   if (existingUser) {
-    console.log('✅ Evaluator user already exists, skipping seed');
+    console.log('[SEED] Evaluator user already exists, skipping seed');
     return;
   }
 
@@ -36,16 +36,16 @@ async function main() {
     },
   });
 
-  console.log('✅ Created evaluator user:', {
+  console.log('[SEED] Created evaluator user:', {
     id: user.id,
     email: user.email,
     phone: user.phone,
     is2faEnabled: user.is2faEnabled,
   });
 
-  console.log('🌱 Seeding complete!');
+  console.log('[SEED] Seeding complete!');
   console.log('');
-  console.log('📋 Evaluator Credentials:');
+  console.log('[SEED] Evaluator Credentials:');
   console.log('   Email:    evaluator@example.com');
   console.log('   Password: Evaluator123!');
   console.log('   Phone:    +14155552671');
@@ -53,7 +53,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('❌ Seeding failed:', e);
+    console.error('[SEED] Seeding failed:', e);
     process.exit(1);
   })
   .finally(async () => {
